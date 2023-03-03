@@ -15,3 +15,18 @@ Organizer of CSS Community Dev, and CSS Conf Colombia.
 1. Creando una cuenta de GitHub
 1. Instalación de Node.js y Yarn
 1. Primeros pasos con VS Code
+
+# Estos son los 5 comando
+| comando | Descripción               |
+|---------|---------------------------|
+| ls      | Lista el contenido        |
+| cd      | Cambiar entre directorios |
+| yarn    | Instalar dependencias     |
+| gst     | Alias de git status       |
+| clear   | Limpiar la terminal       |
+| alias   | Listar los alias          |
+
+# Estos son mis alias más usados
+```bash
+mostused='history | awk '\''{print $2}'\'' | sort | uniq -c | sort -nr | head -n 10'
+```
