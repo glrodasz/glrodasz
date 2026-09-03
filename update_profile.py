@@ -36,35 +36,7 @@ JOINED_YEAR = 2012  # account creation year, never changes
 W = 56  # info column width in characters
 LOC_CACHE_PATH = "loc_cache.json"
 
-ART = r"""
-                .. ..
-            .=#%@@@@@%%%#+-
-          :#@@%%%%%%%%%%%@@%:
-         +@@%%%%%%%%%##%%%@@-
-         #%%%#***+=:..::-=-#*
-         #%++=:......... . =@-
-        .@#=--:::::...  ...=#*
-        .@*==---. :.:--::-::##
-        .%++#+***-. -*++=++ +#:
-       :%*+=*++-*#- .-==::..-:=
-        *#+==-::-++.::..  ..--
-         %#=-. -++-  :.-:   ++
-         :%*- =****-==:-*+ :*-
-           +#.***+-=-:=-==.*:
-            #*=.=+--::. -:+*
-            .@%+.:--:  .+#+...
-             **%*-....=##-  .*%=::
-           :++--##****+-.   :#**@@%#
-         +%@%=-::=+:.      =#*+#%%@= %%#
-      =#:@@%%#-:..-:   :=*##+*%%%@- %%%%
-   -#%@@.=@%%%#**++++*###*+*#%%@%.:%%%%%
-.+%@@%%%# +@%%%##**##**+*##%%@@+ =@%#%%%
-@@%%%%%%@# -%@%%%#****##%%%@%*::#@%%%##%
-%%%#%%%#%@%-.=#@@%%%%%%%#%%+::*@%#%%%#%%
-%%#%%%#%%#%@%+::+%%%#*%%%=.-#@%###%#%%#%
-%#%%%#%%##%#%%%#-.%@+.#%.-%%%###%%##%%#%
-%#%%#%%##%%####%@ =@%%@+ @%#%##%%++#%#%%
-"""
+ART_PATH = "art.json"  # colour glyph grid, generated once by make_art.py
 
 # two tokens by design: the Actions GITHUB_TOKEN yields the contribution-style
 # commit count (public + private activity), while a PAT (ACCESS_TOKEN secret)
@@ -255,9 +227,9 @@ def loc(repo_names, user_id, cache):
 
 
 PALETTES = {
-    "dark": {"bg": "#0d1117", "border": "#30363d", "art": "#8b949e", "h": "#58a6ff",
+    "dark": {"bg": "#0d1117", "border": "#30363d", "h": "#58a6ff",
              "k": "#ffa657", "v": "#c9d1d9", "d": "#484f58", "g": "#3fb950", "r": "#f85149"},
-    "light": {"bg": "#ffffff", "border": "#d0d7de", "art": "#57606a", "h": "#0969da",
+    "light": {"bg": "#ffffff", "border": "#d0d7de", "h": "#0969da",
               "k": "#953800", "v": "#24292f", "d": "#afb8c1", "g": "#1a7f37", "r": "#cf222e"},
 }
 
@@ -305,15 +277,46 @@ def info_lines(s):
     ]
 
 
-def render(mode, stats):
+ART_X, ART_Y, ART_W = 25, 32, 345  # glyph grid box; info column starts at x=390
+
+
+def load_art():
+    with open(ART_PATH, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def art_lines(mode, art):
+    """One <text> per row. Every glyph gets an explicit x (SVG positions characters
+    from the x list in order, across tspans), so glyph pitch is independent of the
+    viewer's monospace font; tspans carry the per-cell colour, merged into runs."""
+    a = art[mode]
+    cw = ART_W / art["cols"]
+    ch = cw * art["cell_aspect"]
+    font = f'font-family="\'Courier New\',Courier,monospace" font-weight="bold" font-size="{ch * 0.68:.2f}px"'
+    out = []
+    for r, (line, colors) in enumerate(zip(a["chars"], a["colors"])):
+        if not line.strip():
+            continue
+        xs = " ".join(f"{ART_X + (c + 0.5) * cw:.1f}" for c in range(len(line)))
+        runs = []
+        for c, glyph in enumerate(line):
+            if runs and runs[-1][0] == colors[c]:
+                runs[-1][1] += glyph
+            else:
+                runs.append([colors[c], glyph])
+        spans = "".join(f'<tspan fill="{col}">{html.escape(t)}</tspan>' for col, t in runs)
+        out.append(f'<text x="{xs}" y="{ART_Y + (r + 0.5) * ch:.2f}" {font} text-anchor="middle" xml:space="preserve">{spans}</text>')
+    return out
+
+
+def render(mode, stats, art):
     p = PALETTES[mode]
     out = [
         '<svg xmlns="http://www.w3.org/2000/svg" width="840" height="500" viewBox="0 0 840 500" '
         f'font-family="Consolas, Menlo, monospace" font-size="13px">',
         f'<rect x="0.5" y="0.5" width="839" height="499" rx="10" fill="{p["bg"]}" stroke="{p["border"]}"/>',
     ]
-    for i, line in enumerate(ART.strip("\n").split("\n")):
-        out.append(f'<text x="25" y="{40 + i * 15}" fill="{p["art"]}" xml:space="preserve">{html.escape(line)}</text>')
+    out += art_lines(mode, art)
     for i, segs in enumerate(info_lines(stats)):
         if not segs:
             continue
@@ -345,7 +348,8 @@ if __name__ == "__main__":
     print("stats:", stats)
     with open(LOC_CACHE_PATH, "w", encoding="utf-8") as f:
         json.dump(cache, f, indent=2, sort_keys=True)
+    art = load_art()
     for mode in PALETTES:
         with open(f"{mode}_mode.svg", "w", encoding="utf-8") as f:
-            f.write(render(mode, stats))
+            f.write(render(mode, stats, art))
     print("wrote dark_mode.svg, light_mode.svg")
