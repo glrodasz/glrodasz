@@ -16,7 +16,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python update_profile.py
+      - run: pip install -e .
+      - run: python -m profilecard
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
