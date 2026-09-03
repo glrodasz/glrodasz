@@ -1,11 +1,12 @@
-"""One-off, run locally: turn a portrait photo into art.json for update_profile.py.
+"""One-off, run locally: turn a portrait photo into art.json for the profilecard package.
 
 Style reverse-engineered from a colour "glyph grid" render: every cell gets a random
 glyph from GLYPHS (blank included) coloured with the photo's average colour for that
 cell; cells darker than DARK_CUT are left empty so hair/shoulders read as a silhouette.
-Needs Pillow + NumPy (`pip install pillow numpy`); NOT used by the daily Action.
+NOT part of the profilecard runtime package and NOT used by the daily Action -- it is
+the only code here that needs third-party deps: `pip install -e ".[art]"`.
 
-    python make_art.py photo.png [--cols 80]
+    python tools/make_art.py photo.png [--cols 80]
 """
 import argparse
 import json
@@ -58,7 +59,8 @@ def build(photo, cols, seed=7):
     chars = rng.integers(0, len(GLYPHS), (rows, cols))
 
     def hexes(colors):
-        return [["#%02x%02x%02x" % tuple(int(v) for v in c) for c in row] for row in colors.clip(0, 255)]
+        # percent-format kept verbatim: regenerating art.json is a rare, manual step
+        return [["#%02x%02x%02x" % tuple(int(v) for v in c) for c in row] for row in colors.clip(0, 255)]  # noqa: UP031
 
     # dark mode: like the reference -- grey backdrop glyphs, dark subject cells blank
     dark = col.copy()
@@ -80,13 +82,18 @@ def build(photo, cols, seed=7):
     }
 
 
-if __name__ == "__main__":
+def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("photo")
     ap.add_argument("--cols", type=int, default=80)
     ap.add_argument("--out", default="art.json")
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
     art = build(a.photo, a.cols)
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(art, f, separators=(",", ":"))
     print(f"wrote {a.out}: {art['cols']}x{art['rows']}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

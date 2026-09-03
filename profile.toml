@@ -1,0 +1,25 @@
+# Personal facts rendered onto the profile card. Editing your bio is a data change,
+# not a code change -- update this file and re-run `make update`.
+
+[github]
+user = "glrodasz"
+joined_year = 2012  # account creation year, never changes
+
+[career]
+start = 2012-08-01  # first job; day is a placeholder, month-precision only
+
+[about]
+os = "macOS"
+host = "Stockholm.Sweden"
+kernel = "Senior Full-stack AI Engineer"
+ide = "Cursor, Claude Code, VS Code"
+hobbies = "Oil Painting"
+
+[languages]
+# Pre-joined on purpose: the separator style is part of the rendered output.
+programming = "TypeScript, JavaScript, Python"
+spoken = "English, Spanish"
+
+[contact]
+email = "me@guillermorodas.com"
+linkedin = "in/guillermorodas"

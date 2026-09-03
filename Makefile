@@ -1,10 +1,14 @@
-.PHONY: update
+.PHONY: install update test art
+
+install:
+	pip install -e ".[dev]"
 
 update:
-	GITHUB_TOKEN=$$(gh auth token) python3 update_profile.py
+	GITHUB_TOKEN=$$(gh auth token) python -m profilecard
 
-.PHONY: art
+test:
+	pytest
 
-# one-off: regenerate art.json from a portrait (needs pillow+numpy)
+# one-off: regenerate art.json from a portrait (needs `pip install -e ".[art]"`)
 art:
-	python3 make_art.py $(PHOTO) --cols 80
+	python tools/make_art.py $(PHOTO) --cols 80
